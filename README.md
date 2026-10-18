@@ -2,12 +2,13 @@
 
 Guests open one link, say who they are, claim a dish, and land on the shared menu.
 
-- **Sign-up:** https://youristmax-cmd.github.io/friendsgiving/
-- **Menu** (the link for Partiful): https://youristmax-cmd.github.io/friendsgiving/menu/
+- **Sign-up:** https://friendsgiving-potluck.pages.dev/
+- **Menu** (the link for Partiful): https://friendsgiving-potluck.pages.dev/menu/
+- **Admin** (hosts only, asks for the admin key): https://friendsgiving-potluck.pages.dev/admin/
 
 ## How it's put together
 
-- **Site:** static HTML/CSS/JS on GitHub Pages (`index.html`, `menu/`, `js/`, `css/`). `config.js` holds the API URL and the party's date, time and address.
+- **Site:** static HTML/CSS/JS on Cloudflare Pages (`index.html`, `menu/`, `admin/`, `js/`, `css/`), published with `./deploy-site.sh`. The old GitHub Pages address redirects there. `config.js` holds the API URL and the party's date, time and address.
 - **Data:** a Cloudflare Worker (`worker/`) with one Durable Object that stores the dish slots and a log of every claim. A Durable Object handles one request at a time, so two people can never claim the same slot.
 - **Guest list:** stored as a Worker secret (`GUESTS`). It is not in this repo and never reaches the browser.
 
@@ -15,13 +16,13 @@ Guests open one link, say who they are, claim a dish, and land on the shared men
 
 Ask Claude in this folder. For example: "Mark the brisket as smoked brisket with a coffee rub", "free up a dessert slot", "add a third potato slot" or "show me everyone who's signed up". Those go through the host-only admin API, using the key saved in `.admin-key` (kept out of git).
 
-Changing the date, time or address means editing `config.js` and pushing.
+Changing the date, time or address means editing `config.js` and running `./deploy-site.sh`.
 
 ## Admin API
 
 ```sh
 KEY=$(cat .admin-key); API=https://friendsgiving.maxyourist.workers.dev/
-curl "$API?action=admin&key=$KEY"                                     # every slot + the claim log
+curl -X POST "$API" -d '{"action":"admin","key":"'$KEY'","op":"view"}'   # slots, who has/hasn't signed up, the log
 curl -X POST "$API" -d '{"action":"admin","key":"'$KEY'","op":"set","slotId":"brisket","name":"Max","description":"Smoked brisket"}'
 curl -X POST "$API" -d '{"action":"admin","key":"'$KEY'","op":"release","slotId":"dessert-2"}'
 curl -X POST "$API" -d '{"action":"admin","key":"'$KEY'","op":"add","item":"Potato","course":"Sides","serves":12}'

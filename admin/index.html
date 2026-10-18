@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Potluck Admin</title>
+<link rel="icon" href="../assets/oak-leaf.png">
+<script>document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');</script>
+<style>
+:root {
+  --cream: #E9E1D3; --paper: #F3EDE2; --orange: #C4521B; --rust: #9E3F12;
+  --line: #D8A68A; --peach: #F3DCCB; --muted: #8A7A66; --ink: #3B2A1E;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--cream); color: var(--ink);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { margin: 0; font-size: 24px; color: var(--orange); }
+h2 { margin: 28px 0 10px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--rust); }
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.sub { color: var(--muted); font-size: 13px; }
+button {
+  font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 4px; cursor: pointer;
+  border: 1.5px solid var(--orange); background: transparent; color: var(--orange);
+}
+button.primary { background: var(--orange); color: #fff; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.stat { background: var(--paper); border: 1.5px solid var(--line); border-radius: 6px; padding: 12px; }
+.stat b { display: block; font-size: 26px; color: var(--orange); line-height: 1.1; }
+.stat span { font-size: 12px; color: var(--muted); }
+.panel { background: var(--paper); border: 1.5px solid var(--line); border-radius: 6px; overflow: hidden; }
+.row { display: flex; gap: 12px; padding: 10px 14px; border-top: 1px solid var(--peach); }
+.row:first-child { border-top: 0; }
+.row .who { flex: 0 0 38%; font-weight: 600; overflow-wrap: anywhere; }
+.row .what { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.row .what small, .row .who small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.course { padding: 6px 14px; background: var(--peach); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--rust); }
+.open { color: var(--muted); font-style: italic; }
+.tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; background: var(--peach); color: var(--rust); margin-left: 6px; font-weight: 400; }
+.empty { padding: 14px; color: var(--muted); }
+.h2row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.h2row h2 { margin-bottom: 10px; }
+#login { max-width: 360px; margin: 80px auto; }
+#login input { width: 100%; font: inherit; padding: 10px; border: 1.5px solid var(--line); border-radius: 4px; background: #fff; margin: 10px 0; }
+.err { color: #A3261B; font-size: 13px; min-height: 1.4em; }
+@media (max-width: 520px) {
+  .row { flex-direction: column; gap: 2px; }
+  .row .who { flex: none; }
+  .stat b { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<form id="login" hidden>
+<h1>Potluck admin</h1>
+<p class="sub">Enter the admin key. This device will remember it.</p>
+<input id="key" type="password" autocomplete="current-password" aria-label="Admin key">
+<div class="err" id="login-err"></div>
+<button class="primary" type="submit">Open</button>
+</form>
+
+<div id="app" hidden>
+<div class="top">
+<h1>Potluck admin</h1>
+<div><button id="refresh" type="button">Refresh</button> <button id="logout" type="button">Sign out</button></div>
+</div>
+<div class="sub" id="updated"></div>
+
+<div class="stats">
+<div class="stat"><b id="s-households"></b><span>households signed up</span></div>
+<div class="stat"><b id="s-waiting"></b><span>haven't signed up</span></div>
+<div class="stat"><b id="s-slots"></b><span>dishes claimed</span></div>
+</div>
+
+<div class="h2row"><h2>Haven't signed up yet</h2><button id="copy" type="button">Copy names</button></div>
+<div class="panel" id="waiting"></div>
+
+<h2>Signed up</h2>
+<div class="panel" id="signed"></div>
+
+<h2>The menu, by dish</h2>
+<div class="panel" id="dishes"></div>
+
+<h2>Recent activity</h2>
+<div class="panel" id="log"></div>
+</div>
+
+</main>
+<script>
+(function () {
+  var cfg = window.FG_CONFIG || {};
+  var KEY = 'fg.adminKey';
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null;
+
+  function getKey() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+  function setKey(k) { try { k ? localStorage.setItem(KEY, k) : localStorage.removeItem(KEY); } catch (e) { /* private mode */ } }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function row(who, whoSmall, what, whatSmall, tag) {
+    var r = el('div', 'row');
+    var a = el('div', 'who', who);
+    if (tag) a.appendChild(el('span', 'tag', tag));
+    if (whoSmall) a.appendChild(el('small', '', whoSmall));
+    var b = el('div', 'what');
+    if (what) b.appendChild(document.createTextNode(what)); else b.appendChild(el('span', 'open', 'Open'));
+    if (whatSmall) b.appendChild(el('small', '', whatSmall));
+    r.appendChild(a); r.appendChild(b);
+    return r;
+  }
+  function when(ms) {
+    if (!ms) return '';
+    return new Date(ms).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  function fill(id, nodes, emptyText) {
+    var box = $(id); box.textContent = '';
+    if (!nodes.length) box.appendChild(el('div', 'empty', emptyText));
+    nodes.forEach(function (n) { box.appendChild(n); });
+  }
+  var joinNames = function (names) { return names.join(' & '); };
+
+  function render(d) {
+    var hh = d.households;
+    var waiting = hh.filter(function (h) { return !h.dish; });
+    var signed = hh.filter(function (h) { return h.dish; });
+    var claimed = d.slots.filter(function (s) { return s.name; });
+    $('s-households').textContent = signed.length + ' / ' + hh.length;
+    $('s-waiting').textContent = waiting.length;
+    $('s-slots').textContent = claimed.length + ' / ' + d.slots.length;
+    $('updated').textContent = 'Updated ' + when(Date.now()) + ' · ' + d.guests + ' guests on the list';
+
+    fill('waiting', waiting.map(function (h) {
+      return row(joinNames(h.names), '', 'No dish yet', '', h.names.length > 1 ? 'couple' : '');
+    }), 'Everyone has signed up.');
+
+    // Signed up: households on the list, then names that aren't (hosts, plus-ones, typos).
+    var signedRows = signed.map(function (h) {
+      return row(joinNames(h.names), 'as “' + h.dish.by + '”', h.dish.item, h.dish.description + (h.dish.at ? ' · ' + when(h.dish.at) : ''));
+    });
+    claimed.filter(function (s) { return !s.onList; }).forEach(function (s) {
+      signedRows.push(row(s.name, '', s.item, (s.description || '') + (s.at ? ' · ' + when(s.at) : ''), 'not on guest list'));
+    });
+    fill('signed', signedRows, 'Nobody yet.');
+
+    var box = $('dishes'); box.textContent = '';
+    var course = '';
+    d.slots.forEach(function (s) {
+      if (s.course !== course) { course = s.course; box.appendChild(el('div', 'course', course)); }
+      box.appendChild(row(s.item, 'serves ' + s.serves, s.name, s.name ? s.description : ''));
+    });
+
+    fill('log', d.log.slice(0, 40).map(function (e) {
+      var verb = { claim: 'claimed', swap: 'switched to', release: 'gave up', 'admin-set': 'set by host:', 'admin-release': 'freed by host:', 'admin-add': 'slot added:', 'admin-remove': 'slot removed:' }[e.action] || e.action;
+      var who = e.name || e.typed || '';
+      return row(when(e.at), '', (who ? who + ' ' : '') + verb + ' ' + e.item, e.desc || '');
+    }), 'No activity yet.');
+  }
+
+  function load() {
+    var key = getKey();
+    if (!key) return showLogin('');
+    $('refresh').disabled = true;
+    fetch(cfg.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin', op: 'view', key: key })
+    }).then(function (res) {
+      if (res.status === 403) { setKey(''); throw new Error('forbidden'); }
+      if (!res.ok) throw new Error('http');
+      return res.json();
+    }).then(function (d) {
+      data = d;
+      $('login').hidden = true; $('app').hidden = false;
+      render(d);
+    }).catch(function (err) {
+      if (err.message === 'forbidden') showLogin('That key didn’t work.');
+      else if (data) $('updated').textContent = 'Couldn’t refresh. Showing what was loaded earlier.';
+      else showLogin('Couldn’t reach the sign-up. Try again in a moment.');
+    }).then(function () { $('refresh').disabled = false; });
+  }
+
+  function showLogin(msg) {
+    $('app').hidden = true; $('login').hidden = false;
+    $('login-err').textContent = msg;
+    $('key').focus();
+  }
+
+  $('login').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var k = $('key').value.trim();
+    if (!k) return;
+    setKey(k); $('key').value = '';
+    load();
+  });
+  $('refresh').addEventListener('click', load);
+  $('logout').addEventListener('click', function () { setKey(''); data = null; showLogin(''); });
+  $('copy').addEventListener('click', function () {
+    if (!data) return;
+    var names = data.households.filter(function (h) { return !h.dish; }).map(function (h) { return joinNames(h.names); }).join('\n');
+    navigator.clipboard.writeText(names).then(function () {
+      $('copy').textContent = 'Copied';
+      setTimeout(function () { $('copy').textContent = 'Copy names'; }, 1500);
+    });
+  });
+  setInterval(function () { if (data && !document.hidden) load(); }, 60000);
+  load();
+})();
+</script>
+</body>
+</html>

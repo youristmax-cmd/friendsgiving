@@ -318,3 +318,37 @@ export function adminEdit(state, body, { now = Date.now() } = {}) {
   }
   throw new UserError('bad_action', 'Unknown admin op.');
 }
+
+// ---------------------------------------------------------------- host view
+
+/**
+ * Everything the admin page shows: every slot, and each household on the guest
+ * list with the dish it holds (null = hasn't signed up yet). Couples count once.
+ */
+export function adminView(state, people) {
+  const seen = new Set();
+  const households = [];
+  people.forEach((p) => {
+    if (seen.has(p)) return;
+    const group = p.couple ? people.filter((x) => x.couple === p.couple) : [p];
+    group.forEach((x) => seen.add(x));
+    const own = group.flatMap((x) => {
+      const ident = identify(x.name, people);
+      return ident.status === 'match' ? ownSlots(state.slots, ident) : [];
+    });
+    const slot = own[0] || null;
+    households.push({
+      names: group.map((x) => x.name),
+      dish: slot ? { slotId: slot.id, item: slot.item, description: slot.desc, by: slot.name, at: slot.claimedAt } : null
+    });
+  });
+  const known = new Set(households.filter((h) => h.dish).map((h) => h.dish.slotId));
+  return {
+    slots: state.slots.map((s) => ({
+      id: s.id, course: s.course, item: s.item, serves: s.serves,
+      name: s.name, description: s.desc, at: s.claimedAt, onList: known.has(s.id)
+    })),
+    households,
+    guests: people.length
+  };
+}

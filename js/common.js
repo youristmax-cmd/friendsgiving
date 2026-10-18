@@ -2,6 +2,11 @@
 (function () {
   var cfg = window.FG_CONFIG || {};
 
+  // The site moved off GitHub Pages; send old links to the new address.
+  if (/github\.io$/.test(location.hostname)) {
+    location.replace('https://friendsgiving-potluck.pages.dev' + location.pathname.replace(/^\/friendsgiving/, '') + location.search + location.hash);
+  }
+
   // Reveal the page once both faces are loaded (or after 3s, whichever first).
   var root = document.documentElement;
   root.classList.add('fonts-loading');

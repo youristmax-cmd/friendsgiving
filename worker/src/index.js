@@ -6,6 +6,7 @@
 //   GET  ?action=identify&name=<typed> who that is, and their current dish
 //   POST {action:"claim", name, item, description, swap}
 //   GET  ?action=admin&key=<ADMIN_KEY>            everything, plus the log
+//   POST {action:"admin", key, op:"view"}         the admin page: slots, households, log
 //   POST {action:"admin", key, op, ...}           host edits (see core.adminEdit)
 import { DurableObject } from 'cloudflare:workers';
 import * as core from './core.js';
@@ -73,6 +74,10 @@ export class Potluck extends DurableObject {
         }
         if (body.action === 'admin') {
           if (!this.isAdmin(body.key)) return json({ error: 'forbidden' }, 403);
+          if (body.op === 'view') {
+            const log = [...(await this.ctx.storage.list({ prefix: 'log:', reverse: true, limit: 200 })).values()];
+            return json({ ...core.adminView(state, this.people()), log });
+          }
           const r = core.adminEdit(state, body);
           await this.save([{ at: Date.now(), action: r.action, slotId: r.slot.id, item: r.slot.item, name: r.slot.name, desc: r.slot.desc }]);
           return json({ ok: true, slot: r.slot });
