@@ -2,6 +2,10 @@
 (function () {
   var COURSES = ['To Start', 'The Main', 'Sides', 'Sweets', 'Drinks'];
   var REFRESH_MS = 45000;
+  // Shown as section headers. In these sections the item is the header, so the
+  // guest's description is the whole entry; elsewhere it's the dish, then the description.
+  var HEADERS = { 'To Start': 'Appetizers', 'Sweets': 'Desserts' };
+  var DESC_ONLY = ['To Start', 'Sweets', 'Drinks'];
 
   var params = new URLSearchParams(location.search);
   var me = params.get('me') || '';
@@ -43,16 +47,20 @@
       leafR.className = 'flip';
       head.appendChild(node('span', 'rule'));
       head.appendChild(leafL);
-      head.appendChild(node('span', 'course-name', course));
+      head.appendChild(node('span', 'course-name', HEADERS[course] || course));
       head.appendChild(leafR);
       head.appendChild(node('span', 'rule'));
       section.appendChild(head);
       var ul = node('ul', 'entries');
       list.forEach(function (e) {
         var li = node('li', 'entry' + (e.mine ? ' mine' : ''));
-        // The dish first, then what the guest wrote about it.
-        li.appendChild(node('div', 'entry-title', e.item));
-        if (e.title && e.title.toLowerCase() !== e.item.toLowerCase()) li.appendChild(node('div', 'entry-desc', e.title));
+        var desc = e.title && e.title.toLowerCase() !== e.item.toLowerCase() ? e.title : '';
+        if (DESC_ONLY.indexOf(course) >= 0) {
+          li.appendChild(node('div', 'entry-title', desc || e.item));
+        } else {
+          li.appendChild(node('div', 'entry-title', e.item));
+          if (desc) li.appendChild(node('div', 'entry-desc', desc));
+        }
         li.appendChild(node('div', 'entry-meta', 'by ' + e.by + ' · serves ' + e.serves));
         if (e.mine) {
           li.appendChild(node('span', 'pill', 'you'));
