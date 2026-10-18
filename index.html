@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Friendsgiving Potluck</title>
+<meta name="description" content="Pick a dish, tell us what you're making, and land on the shared menu.">
+<meta property="og:title" content="Friendsgiving Potluck">
+<meta property="og:description" content="Pick a dish, tell us what you're making, and land on the shared menu.">
+<meta property="og:image" content="https://maxyourist.github.io/friendsgiving/assets/table.png">
+<meta name="theme-color" content="#E9E1D3">
+<link rel="icon" href="assets/oak-leaf.png">
+<link rel="preload" href="fonts/WhimsicalRomanceSans-Regular.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="fonts/WhimsicalRomanceScript-Regular.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="assets/table.png" as="image">
+<link rel="stylesheet" href="css/style.css">
+<noscript><style>.fonts-loading .page{visibility:visible}</style></noscript>
+<script src="config.js"></script>
+<script src="js/common.js"></script>
+</head>
+<body>
+<main class="page">
+<div class="frame">
+
+<svg class="wave wave-top" aria-hidden="true" width="100%" height="16"><defs><pattern id="fw-h" width="44" height="16" patternUnits="userSpaceOnUse"><path d="M0 8 Q11 -2 22 8 T44 8" fill="none" stroke="#C4521B" stroke-width="2.5" stroke-linecap="round"/></pattern><pattern id="fw-v" width="16" height="44" patternUnits="userSpaceOnUse"><path d="M8 0 Q-2 11 8 22 T8 44" fill="none" stroke="#C4521B" stroke-width="2.5" stroke-linecap="round"/></pattern></defs><rect width="100%" height="16" fill="url(#fw-h)"/></svg>
+<svg class="wave wave-bottom" aria-hidden="true" width="100%" height="16"><rect width="100%" height="16" fill="url(#fw-h)"/></svg>
+<svg class="wave wave-left" aria-hidden="true" width="16"><rect width="16" height="100%" fill="url(#fw-v)"/></svg>
+<svg class="wave wave-right" aria-hidden="true" width="16"><rect width="16" height="100%" fill="url(#fw-v)"/></svg>
+
+<div class="stack">
+
+<header class="center" id="hero">
+<h1 class="title-sans">Friendsgiving</h1>
+<div class="title-script">Potluck</div>
+<img class="hero" src="assets/table.png" alt="" width="727" height="600">
+<div class="event">
+<div class="event-when" data-config="when">[Date] | at [Time]</div>
+<div class="event-small" data-config="address">[Address]</div>
+<div class="event-small" data-config="hosts">Hosted by Carly &amp; Max</div>
+</div>
+<p class="intro">Pick a dish from what's still open, tell us what you're making, and you'll land on the shared menu. Every dish lists how many servings it needs.</p>
+</header>
+
+<div class="center" id="compact" hidden>
+<div class="compact-script">Potluck</div>
+<div class="compact-art"><img id="step-art" src="assets/pumpkins.png" alt="" style="width: 170px"></div>
+</div>
+
+<img class="sprig" src="assets/sprig.png" alt="" width="162" height="90">
+
+<div class="steps" id="steps" role="img" aria-label="Step 1 of 3">
+<span class="on"></span><span></span><span></span>
+</div>
+
+<!-- Step 1 -->
+<section class="section" id="step1" aria-labelledby="step1-title">
+<div class="center">
+<div class="kicker">Step one</div>
+<h2 class="step-title" id="step1-title">Who's cooking?</h2>
+</div>
+<div class="field">
+<label class="label" for="guest-name">Your name</label>
+<input class="text-input" id="guest-name" type="text" name="name" autocomplete="name" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="80" placeholder="First and last name">
+</div>
+
+<div aria-live="polite">
+<div class="card" id="card-empty"><div class="card-text" id="card-empty-text">Type your name and we'll suggest what size dish to take on.</div></div>
+
+<div class="card card-match" id="card-match" hidden>
+<span class="initials" id="initials" aria-hidden="true"></span>
+<div class="card-body">
+<div class="card-name" id="match-name"></div>
+<div class="card-text" id="match-nudge"></div>
+</div>
+</div>
+
+<div class="card card-dashed" id="card-ambiguous" hidden>
+<div class="card-text">More than one guest matches that. Add your first and last name so we know which one you are.</div>
+</div>
+</div>
+
+<div class="card claimed" id="card-claimed" hidden>
+<span class="summary-kicker">You're already on the menu</span>
+<div class="card-name" id="claimed-title"></div>
+<div class="card-text" id="claimed-meta"></div>
+<div class="btn-row even">
+<a class="btn btn-outline" id="see-menu" href="menu/">See the menu</a>
+<button type="button" class="btn btn-primary" id="change-dish">Change my dish</button>
+</div>
+</div>
+
+<button type="button" class="btn btn-primary" id="next1" disabled>Next: pick your dish</button>
+</section>
+
+<!-- Step 2 -->
+<section class="section" id="step2" aria-labelledby="step2-title" hidden>
+<div class="center">
+<div class="kicker">Step two</div>
+<h2 class="step-title" id="step2-title">Pick your dish</h2>
+<div class="subnote">Only what's still open is shown</div>
+</div>
+<div class="nudge" id="nudge2"></div>
+<div class="dishes" id="dishes" role="group" aria-label="Available dishes"></div>
+<div class="btn-row">
+<button type="button" class="btn btn-outline" id="back2">Back</button>
+<button type="button" class="btn btn-primary" id="next2" disabled>Next</button>
+</div>
+</section>
+
+<!-- Step 3 -->
+<section class="section" id="step3" aria-labelledby="step3-title" hidden>
+<div class="center">
+<div class="kicker">Step three</div>
+<h2 class="step-title" id="step3-title">What are you bringing?</h2>
+</div>
+<div class="summary">
+<span class="summary-kicker">You're bringing</span>
+<span class="summary-title" id="summary-title">Nothing picked yet</span>
+<span class="summary-serves" id="summary-serves">—</span>
+</div>
+<div class="field">
+<label class="label" for="dish-desc">Describe your dish · required</label>
+<textarea class="textarea" id="dish-desc" rows="4" maxlength="300" enterkeyhint="done" aria-describedby="servings-note"></textarea>
+<div class="hint" id="servings-note"></div>
+</div>
+<div class="btn-row">
+<button type="button" class="btn btn-outline" id="back3">Back</button>
+<button type="button" class="btn btn-primary" id="claim" disabled>Claim my dish</button>
+</div>
+<p class="swap-line">Need to swap? Come back to this link and pick again.</p>
+</section>
+
+<div class="note" id="note" role="status" aria-live="polite"></div>
+
+</div>
+</div>
+</main>
+<script src="js/signup.js"></script>
+</body>
+</html>

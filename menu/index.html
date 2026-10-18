@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Friendsgiving Menu</title>
+<meta name="description" content="Everything on the Friendsgiving table so far.">
+<meta property="og:title" content="Friendsgiving Menu">
+<meta property="og:description" content="Everything on the Friendsgiving table so far.">
+<meta property="og:image" content="https://maxyourist.github.io/friendsgiving/assets/pie.png">
+<meta name="theme-color" content="#E9E1D3">
+<link rel="icon" href="../assets/oak-leaf.png">
+<link rel="preload" href="../fonts/WhimsicalRomanceSans-Regular.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="../fonts/WhimsicalRomanceScript-Regular.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../css/style.css">
+<noscript><style>.fonts-loading .page{visibility:visible}</style></noscript>
+<script src="../config.js"></script>
+<script src="../js/common.js"></script>
+</head>
+<body>
+<div class="banner" id="banner" hidden>
+<div class="banner-text">
+<span class="banner-kicker">You're on the menu</span>
+<span class="banner-line" id="banner-line"></span>
+</div>
+<a class="banner-btn" href="../">Change dish</a>
+</div>
+<main class="page">
+<div class="frame frame-menu">
+
+<svg class="wave wave-top" aria-hidden="true" width="100%" height="16"><defs><pattern id="mw-h" width="44" height="16" patternUnits="userSpaceOnUse"><path d="M0 8 Q11 -2 22 8 T44 8" fill="none" stroke="#C4521B" stroke-width="2.5" stroke-linecap="round"/></pattern><pattern id="mw-v" width="16" height="44" patternUnits="userSpaceOnUse"><path d="M8 0 Q-2 11 8 22 T8 44" fill="none" stroke="#C4521B" stroke-width="2.5" stroke-linecap="round"/></pattern></defs><rect width="100%" height="16" fill="url(#mw-h)"/></svg>
+<svg class="wave wave-bottom" aria-hidden="true" width="100%" height="16"><rect width="100%" height="16" fill="url(#mw-h)"/></svg>
+<svg class="wave wave-left" aria-hidden="true" width="16"><rect width="16" height="100%" fill="url(#mw-v)"/></svg>
+<svg class="wave wave-right" aria-hidden="true" width="16"><rect width="16" height="100%" fill="url(#mw-v)"/></svg>
+
+<div class="stack">
+
+<header class="center">
+<div class="menu-kicker">Friendsgiving</div>
+<h1 class="menu-title">Menu</h1>
+<img class="menu-art" src="../assets/pie.png" alt="" width="271" height="159">
+<div class="menu-when" data-config="when">[Date] | at [Time]</div>
+<div class="menu-where" data-config="address">[Address]</div>
+<div class="script-line progress" id="progress" role="status" aria-live="polite">setting the table&hellip;</div>
+</header>
+
+<div class="stack" id="courses"></div>
+
+<footer class="menu-foot">
+<img src="../assets/bow.png" alt="" width="203" height="133">
+<div class="script-line">more dishes land here as friends sign up</div>
+<div class="small-caps" data-config="hosts">Hosted by Carly &amp; Max</div>
+<a class="small-caps" href="../">Bring a dish</a>
+</footer>
+
+</div>
+</div>
+</main>
+<script src="../js/menu.js"></script>
+</body>
+</html>

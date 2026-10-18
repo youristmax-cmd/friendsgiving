@@ -1,0 +1,5 @@
+# Handoff material: the design JS and data files contain the guest list. Never publish.
+_handoff/
+dev/*.test.js
+.DS_Store
+node_modules/
