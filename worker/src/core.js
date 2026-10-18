@@ -26,7 +26,8 @@ export function seedSlots() {
     s('dessert-1', 'Dessert', 'Sweets', 7, false, 'Carly'),
     s('dessert-2', 'Dessert', 'Sweets', 7),
     s('dessert-3', 'Dessert', 'Sweets', 7),
-    s('na-drinks', 'Non-alcoholic drinks', 'Drinks', 25),
+    s('non-alcoholic-drinks-1', 'Non-alcoholic drinks', 'Drinks', 12),
+    s('non-alcoholic-drinks-2', 'Non-alcoholic drinks', 'Drinks', 12),
     s('drinks-1', 'Alcoholic drinks', 'Drinks', 12),
     s('drinks-2', 'Alcoholic drinks', 'Drinks', 12)
   ];
