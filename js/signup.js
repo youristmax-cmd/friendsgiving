@@ -25,7 +25,7 @@
     name: $('guest-name'), cardEmpty: $('card-empty'), cardEmptyText: $('card-empty-text'),
     cardMatch: $('card-match'), initials: $('initials'), matchName: $('match-name'), matchNudge: $('match-nudge'),
     cardAmbiguous: $('card-ambiguous'), cardClaimed: $('card-claimed'), claimedTitle: $('claimed-title'),
-    claimedMeta: $('claimed-meta'), changeDish: $('change-dish'), next1: $('next1'),
+    claimedMeta: $('claimed-meta'), changeDish: $('change-dish'), next1: $('next1'), seeMenu1: $('see-menu-1'),
     nudge2: $('nudge2'), dishes: $('dishes'), back2: $('back2'), next2: $('next2'),
     summaryTitle: $('summary-title'), summaryServes: $('summary-serves'), desc: $('dish-desc'),
     servingsNote: $('servings-note'), back3: $('back3'), claim: $('claim'), note: $('note')
@@ -310,6 +310,7 @@
     var existing = hasExisting();
     show(el.cardClaimed, existing);
     show(el.next1, !existing);
+    show(el.seeMenu1, !existing); // the claimed card has its own menu button
     if (existing) {
       el.claimedTitle.textContent = 'You’re down for ' + id.existing.item;
       el.claimedMeta.textContent = (id.existing.description ? id.existing.description + ' · ' : '') + 'serves ' + id.existing.serves;
