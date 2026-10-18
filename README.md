@@ -4,7 +4,7 @@ Guests open one link, say who they are, claim a dish, and land on the shared men
 
 - **Sign-up:** https://friendsgiving-potluck.pages.dev/
 - **Menu** (the link for Partiful): https://friendsgiving-potluck.pages.dev/menu/
-- **Admin** (hosts only, asks for the admin key): https://friendsgiving-potluck.pages.dev/admin/
+- **Admin** (hosts only, asks for the admin key): https://friendsgiving-potluck.pages.dev/admin/ — also downloads the menu as a PDF and printable food cards (`cards/`, 8 per Letter page)
 
 ## How it's put together
 

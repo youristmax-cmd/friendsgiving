@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=816">
+<meta name="robots" content="noindex, nofollow">
+<title>Food Cards</title>
+<link rel="icon" href="../assets/oak-leaf.png">
+<link rel="stylesheet" href="../css/style.css?v=4">
+<script>document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');</script>
+<script src="../js/common.js?v=3"></script>
+<script src="../js/dishes.js?v=1"></script>
+<style>
+/* Letter sheets (8.5 x 11 in at 96px/in) of 2 x 4 cards, for the admin page's PDF export. */
+html, body { background: #fff; }
+body { min-height: 0; }
+.sheets { display: flex; flex-direction: column; gap: 24px; width: 816px; }
+.sheet {
+  width: 816px; height: 1056px; box-sizing: border-box; padding: 48px;
+  background: #fff;
+  display: grid; grid-template-columns: repeat(2, 352px); grid-auto-rows: 228px; gap: 16px;
+  align-content: start;
+}
+.fcard {
+  position: relative; box-sizing: border-box; padding: 22px 26px;
+  background: var(--cream); overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px;
+}
+.fcard svg { position: absolute; inset: 0; pointer-events: none; }
+.fcard .course-head { align-self: stretch; gap: 8px; margin-bottom: 2px; }
+.fcard .course-head img { width: 14px; }
+.fcard .course-name { font-size: 8px; }
+.fcard-title { max-width: 100%; font-family: var(--script); font-size: 19px; line-height: 1.9; color: var(--orange); overflow-wrap: anywhere; }
+.fcard-desc { max-width: 100%; font-size: 9px; line-height: 1.6; color: var(--rust); overflow-wrap: anywhere; }
+.fcard-by { margin-top: 4px; font-size: 7.5px; line-height: 1.4; letter-spacing: 0.18em; color: var(--rust); }
+.empty { padding: 48px; font-size: 12px; color: var(--rust); }
+</style>
+</head>
+<body>
+<div class="sheets" id="sheets"></div>
+<script>
+(function () {
+  var PER_SHEET = 8;
+  var W = 352, H = 228;
+  var sheetsEl = document.getElementById('sheets');
+
+  function node(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  // The site's wavy border, drawn as four strips like the page frame.
+  function wave(x, y, len, horizontal, amp) {
+    var halves = Math.max(2, Math.round(len / 11));
+    var h = len / halves;
+    var pt = function (along, off) { return horizontal ? (x + along) + ' ' + (y + off) : (x + off) + ' ' + (y + along); };
+    var d = 'M' + pt(0, 0) + ' Q' + pt(h / 2, -amp * 2) + ' ' + pt(h, 0);
+    for (var i = 2; i <= halves; i++) d += ' T' + pt(h * i, 0);
+    return '<path d="' + d + '"/>';
+  }
+  function border() {
+    var m = 6, a = 2.5;
+    return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">'
+      + '<g fill="none" stroke="#C4521B" stroke-width="2" stroke-linecap="round">'
+      + wave(0, m, W, true, a) + wave(0, H - m, W, true, a)
+      + wave(m, m + 4, H - 2 * m - 8, false, a) + wave(W - m, m + 4, H - 2 * m - 8, false, a)
+      + '</g></svg>';
+  }
+
+  function head(course) {
+    var h = node('div', 'course-head');
+    var leaf = node('img'); leaf.src = '../assets/oak-leaf.png'; leaf.alt = '';
+    var leafR = leaf.cloneNode(); leafR.className = 'flip';
+    h.appendChild(node('span', 'rule')); h.appendChild(leaf);
+    h.appendChild(node('span', 'course-name', course));
+    h.appendChild(leafR); h.appendChild(node('span', 'rule'));
+    return h;
+  }
+
+  function card(e) {
+    var c = node('div', 'fcard');
+    c.innerHTML = border();
+    var label = FG.dishLabel(e);
+    c.appendChild(head(e.course));
+    c.appendChild(node('div', 'fcard-title', label.title));
+    if (label.desc) c.appendChild(node('div', 'fcard-desc', label.desc));
+    c.appendChild(node('div', 'fcard-by', 'made by ' + e.by));
+    return c;
+  }
+
+  // Shrink long titles until the card's contents fit inside the border.
+  function fit(c) {
+    var title = c.querySelector('.fcard-title');
+    var desc = c.querySelector('.fcard-desc');
+    var size = 19;
+    var room = function () {
+      var used = 0;
+      [].forEach.call(c.children, function (k) { if (k.tagName !== 'svg') used += k.offsetHeight + 4; });
+      return used <= H - 44;
+    };
+    while (!room() && size > 10) { size -= 1; title.style.fontSize = size + 'px'; }
+    var ds = 9;
+    while (desc && !room() && ds > 7) { ds -= 0.5; desc.style.fontSize = ds + 'px'; }
+  }
+
+  function render(entries) {
+    sheetsEl.textContent = '';
+    if (!entries.length) { sheetsEl.appendChild(node('div', 'empty', 'No dishes claimed yet.')); return; }
+    var sheet;
+    entries.forEach(function (e, i) {
+      if (i % PER_SHEET === 0) { sheet = node('div', 'sheet'); sheetsEl.appendChild(sheet); }
+      sheet.appendChild(card(e));
+    });
+    [].forEach.call(document.querySelectorAll('.fcard'), fit);
+  }
+
+  var COURSES = ['To Start', 'The Main', 'Sides', 'Sweets', 'Drinks'];
+  Promise.all([
+    FG.get({ action: 'menu' }),
+    document.fonts ? document.fonts.ready : null
+  ]).then(function (r) {
+    var entries = (r[0].entries || []).slice();
+    entries.sort(function (a, b) { return COURSES.indexOf(a.course) - COURSES.indexOf(b.course); });
+    render(entries);
+    window.FG_CARDS_READY = true;
+  }).catch(function () {
+    sheetsEl.appendChild(node('div', 'empty', 'Couldn’t reach the sign-up.'));
+    window.FG_CARDS_FAILED = true;
+  });
+})();
+</script>
+</body>
+</html>

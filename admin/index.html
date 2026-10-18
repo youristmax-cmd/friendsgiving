@@ -67,7 +67,7 @@ button.primary { background: var(--orange); color: #fff; }
 <div id="app" hidden>
 <div class="top">
 <h1>Potluck admin</h1>
-<div><button id="pdf" type="button">Download menu PDF</button> <button id="refresh" type="button">Refresh</button> <button id="logout" type="button">Sign out</button></div>
+<div><button id="pdf" type="button">Download menu PDF</button> <button id="cards" type="button">Download food cards PDF</button> <button id="refresh" type="button">Refresh</button> <button id="logout" type="button">Sign out</button></div>
 </div>
 <div class="sub" id="updated"></div>
 
@@ -261,17 +261,19 @@ button.primary { background: var(--orange); color: #fff; }
       })();
     });
   }
-  function downloadMenu() {
-    var btn = $('pdf');
+  // Loads a page off-screen, snapshots the given parts of it, one PDF page each.
+  //   opts: { src, width, ready (window flag), parts (selector), file, button, label, letter }
+  function makePdf(opts) {
+    var btn = $(opts.button);
     btn.disabled = true; btn.textContent = 'Making PDF…';
     var f = document.createElement('iframe');
     f.setAttribute('aria-hidden', 'true');
-    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:548px;height:1200px;border:0';
-    f.src = '../menu/?print=1&t=' + Date.now();
+    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + opts.width + 'px;height:1200px;border:0';
+    f.src = opts.src + (opts.src.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
     document.body.appendChild(f);
     var win, doc;
     (window.jspdf ? Promise.resolve() : loadScript(document, LIBS.pdf))
-      .then(function () { return waitFor(function () { return f.contentWindow && f.contentWindow.FG_MENU_READY; }, 20000); })
+      .then(function () { return waitFor(function () { return f.contentWindow && f.contentWindow[opts.ready]; }, 20000); })
       .then(function () {
         win = f.contentWindow; doc = f.contentDocument;
         return Promise.all([doc.fonts.ready, loadScript(doc, LIBS.image)].concat([].map.call(doc.images, function (img) {
@@ -283,23 +285,42 @@ button.primary { background: var(--orange); color: #fff; }
         return new Promise(function (r) { setTimeout(r, 300); });
       })
       .then(function () {
-        var node = doc.querySelector('.page');
-        // JPEG keeps the file small (a PNG this size makes a ~25 MB PDF).
-        return win.htmlToImage.toJpeg(node, { pixelRatio: 3, quality: 0.92, backgroundColor: '#E9E1D3' }).then(function (img) {
-          var w = node.offsetWidth * 0.75, h = node.offsetHeight * 0.75; // CSS px → pt
-          var pdf = new window.jspdf.jsPDF({ unit: 'pt', format: [w, h], orientation: h > w ? 'portrait' : 'landscape' });
-          pdf.addImage(img, 'JPEG', 0, 0, w, h);
-          pdf.save('friendsgiving-menu-' + new Date().toISOString().slice(0, 10) + '.pdf');
+        var parts = [].slice.call(doc.querySelectorAll(opts.parts));
+        if (!parts.length) throw new Error('empty');
+        var pdf = null;
+        // One at a time; JPEG keeps the file small (a PNG this size makes a ~25 MB PDF).
+        return parts.reduce(function (chain, node) {
+          return chain.then(function () {
+            return win.htmlToImage.toJpeg(node, { pixelRatio: 3, quality: 0.92, backgroundColor: opts.letter ? '#FFFFFF' : '#E9E1D3' }).then(function (img) {
+              var w = opts.letter ? 612 : node.offsetWidth * 0.75; // CSS px → pt
+              var h = opts.letter ? 792 : node.offsetHeight * 0.75;
+              var o = h > w ? 'portrait' : 'landscape';
+              if (!pdf) pdf = new window.jspdf.jsPDF({ unit: 'pt', format: [w, h], orientation: o });
+              else pdf.addPage([w, h], o);
+              pdf.addImage(img, 'JPEG', 0, 0, w, h);
+            });
+          });
+        }, Promise.resolve()).then(function () {
+          pdf.save(opts.file + '-' + new Date().toISOString().slice(0, 10) + '.pdf');
         });
       })
-      .catch(function () { alertLine('Couldn’t make the PDF. Try again in a moment.'); })
+      .catch(function (err) {
+        alertLine(err && err.message === 'empty' ? 'No dishes claimed yet, so there’s nothing to print.' : 'Couldn’t make the PDF. Try again in a moment.');
+      })
       .then(function () {
         f.remove();
-        btn.disabled = false; btn.textContent = 'Download menu PDF';
+        btn.disabled = false; btn.textContent = opts.label;
       });
+  }
+  function downloadMenu() {
+    makePdf({ src: '../menu/?print=1', width: 548, ready: 'FG_MENU_READY', parts: '.page', file: 'friendsgiving-menu', button: 'pdf', label: 'Download menu PDF' });
+  }
+  function downloadCards() {
+    makePdf({ src: '../cards/', width: 816, ready: 'FG_CARDS_READY', parts: '.sheet', file: 'friendsgiving-food-cards', button: 'cards', label: 'Download food cards PDF', letter: true });
   }
   function alertLine(msg) { $('updated').textContent = msg; }
   $('pdf').addEventListener('click', downloadMenu);
+  $('cards').addEventListener('click', downloadCards);
   load();
 })();
 </script>
