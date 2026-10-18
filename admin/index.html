@@ -83,6 +83,9 @@ button.primary { background: var(--orange); color: #fff; }
 <h2>Signed up</h2>
 <div class="panel" id="signed"></div>
 
+<h2>Can't make it</h2>
+<div class="panel" id="cant"></div>
+
 <h2>The menu, by dish</h2>
 <div class="panel" id="dishes"></div>
 
@@ -128,24 +131,41 @@ button.primary { background: var(--orange); color: #fff; }
     nodes.forEach(function (n) { box.appendChild(n); });
   }
   var joinNames = function (names) { return names.join(' & '); };
+  var RSVP = { going: 'going', maybe: 'maybe', cant: 'can’t go', invited: 'no reply' };
+  // A household's Partiful answer: the best of its members' answers.
+  function rsvpOf(h) {
+    var r = h.rsvp || [];
+    return ['going', 'maybe', 'invited', 'cant'].filter(function (s) { return r.indexOf(s) >= 0; })[0] || '';
+  }
+  function rsvpText(h) {
+    var s = rsvpOf(h);
+    return s ? 'Partiful: ' + RSVP[s] : (data && data.syncedAt ? 'not on Partiful' : '');
+  }
 
   function render(d) {
     var hh = d.households;
-    var waiting = hh.filter(function (h) { return !h.dish; });
+    var cant = hh.filter(function (h) { return !h.dish && rsvpOf(h) === 'cant'; });
+    var waiting = hh.filter(function (h) { return !h.dish && rsvpOf(h) !== 'cant'; });
+    // Coming for sure first, then maybe, no reply, and not on Partiful.
+    var order = { going: 0, maybe: 1, invited: 2, '': 3 };
+    waiting.sort(function (a, b) { return order[rsvpOf(a)] - order[rsvpOf(b)]; });
     var signed = hh.filter(function (h) { return h.dish; });
     var claimed = d.slots.filter(function (s) { return s.name; });
-    $('s-households').textContent = signed.length + ' / ' + hh.length;
+    $('s-households').textContent = signed.length + ' / ' + (hh.length - cant.length);
     $('s-waiting').textContent = waiting.length;
     $('s-slots').textContent = claimed.length + ' / ' + d.slots.length;
-    $('updated').textContent = 'Updated ' + when(Date.now()) + ' · ' + d.guests + ' guests on the list';
+    $('updated').textContent = 'Updated ' + when(Date.now()) + ' · ' + d.guests + ' guests on the list · '
+      + (d.syncedAt ? 'Partiful checked ' + when(d.syncedAt) : 'Partiful not synced yet');
 
     fill('waiting', waiting.map(function (h) {
-      return row(joinNames(h.names), '', 'No dish yet', '', h.names.length > 1 ? 'couple' : '');
+      return row(joinNames(h.names), rsvpText(h), 'No dish yet', '', h.names.length > 1 ? 'couple' : '');
     }), 'Everyone has signed up.');
+    fill('cant', cant.map(function (h) { return row(joinNames(h.names), '', '', ''); }), 'Nobody so far.');
+    $('cant').querySelectorAll('.open').forEach(function (n) { n.textContent = ''; });
 
     // Signed up: households on the list, then names that aren't (hosts, plus-ones, typos).
     var signedRows = signed.map(function (h) {
-      return row(joinNames(h.names), 'as “' + h.dish.by + '”', h.dish.item, h.dish.description + (h.dish.at ? ' · ' + when(h.dish.at) : ''));
+      return row(joinNames(h.names), 'as “' + h.dish.by + '”' + (rsvpText(h) ? ' · ' + rsvpText(h) : ''), h.dish.item, h.dish.description + (h.dish.at ? ' · ' + when(h.dish.at) : ''));
     });
     var hosts = (cfg.hosts || '').toLowerCase().split(/\s*&\s*/);
     claimed.filter(function (s) { return !s.onList; }).forEach(function (s) {
@@ -163,6 +183,7 @@ button.primary { background: var(--orange); color: #fff; }
 
     fill('log', d.log.slice(0, 40).map(function (e) {
       var verb = { claim: 'claimed', swap: 'switched to', release: 'gave up', 'admin-set': 'set by host:', 'admin-release': 'freed by host:', 'admin-add': 'slot added:', 'admin-remove': 'slot removed:' }[e.action] || e.action;
+      if (e.action === 'roster') return row(when(e.at), '', 'Guest list synced from Partiful', e.added + ' added · ' + e.solo / 2 + ' couples split · ' + e.rsvp + ' RSVPs');
       var who = e.name || e.typed || '';
       return row(when(e.at), '', (who ? who + ' ' : '') + verb + ' ' + e.item, e.desc || '');
     }), 'No activity yet.');
@@ -208,7 +229,7 @@ button.primary { background: var(--orange); color: #fff; }
   $('logout').addEventListener('click', function () { setKey(''); data = null; showLogin(''); });
   $('copy').addEventListener('click', function () {
     if (!data) return;
-    var names = data.households.filter(function (h) { return !h.dish; }).map(function (h) { return joinNames(h.names); }).join('\n');
+    var names = data.households.filter(function (h) { return !h.dish && rsvpOf(h) !== 'cant'; }).map(function (h) { return joinNames(h.names); }).join('\n');
     navigator.clipboard.writeText(names).then(function () {
       $('copy').textContent = 'Copied';
       setTimeout(function () { $('copy').textContent = 'Copy names'; }, 1500);

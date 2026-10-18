@@ -7,3 +7,5 @@ worker/node_modules/
 worker/.wrangler/
 worker/.dev.vars
 .admin-key
+sync/snapshots/
+sync/*.log

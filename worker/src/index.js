@@ -7,6 +7,7 @@
 //   POST {action:"claim", name, item, description, swap}
 //   GET  ?action=admin&key=<ADMIN_KEY>            everything, plus the log
 //   POST {action:"admin", key, op:"view"}         the admin page: slots, households, log
+//   POST {action:"admin", key, op:"roster", added, solo, rsvp}   guest list changes from Partiful
 //   POST {action:"admin", key, op, ...}           host edits (see core.adminEdit)
 import { DurableObject } from 'cloudflare:workers';
 import * as core from './core.js';
@@ -29,8 +30,11 @@ export class Potluck extends DurableObject {
     return this.cached;
   }
 
+  // The fixed list plus the changes synced from Partiful (see core.mergeRoster).
   people() {
-    try { return JSON.parse(this.env.GUESTS || '{}').guests || []; } catch { return []; }
+    let base = [];
+    try { base = JSON.parse(this.env.GUESTS || '{}').guests || []; } catch { /* no list */ }
+    return core.mergeRoster(base, this.cached && this.cached.roster);
   }
 
   async save(log) {
@@ -77,6 +81,11 @@ export class Potluck extends DurableObject {
           if (body.op === 'view') {
             const log = [...(await this.ctx.storage.list({ prefix: 'log:', reverse: true, limit: 200 })).values()];
             return json({ ...core.adminView(state, this.people()), log });
+          }
+          if (body.op === 'roster') {
+            state.roster = core.cleanRoster(body);
+            await this.save([{ at: Date.now(), action: 'roster', item: '', added: state.roster.added.length, solo: state.roster.solo.length, rsvp: Object.keys(state.roster.rsvp).length }]);
+            return json({ ok: true, roster: state.roster, guests: this.people().length });
           }
           const r = core.adminEdit(state, body);
           await this.save([{ at: Date.now(), action: r.action, slotId: r.slot.id, item: r.slot.item, name: r.slot.name, desc: r.slot.desc }]);

@@ -65,7 +65,7 @@ function lev(a, b) {
 
 const tol = (s) => (s.length <= 4 ? 1 : (s.length <= 8 ? 2 : 3));
 
-function findPerson(text, people) {
+export function findPerson(text, people) {
   const q = norm(text);
   const qt = q ? q.split(' ') : [];
   const found = [];
@@ -319,6 +319,39 @@ export function adminEdit(state, body, { now = Date.now() } = {}) {
   throw new UserError('bad_action', 'Unknown admin op.');
 }
 
+// ---------------------------------------------------------------- guest list changes
+
+export const RSVPS = ['going', 'maybe', 'cant', 'invited'];
+
+/**
+ * The guest list the site uses: the fixed list (Worker secret) plus the
+ * changes synced from Partiful, kept in state.roster:
+ *   added  [{ name, couple }]   new guests (couple: shared id for a new pair)
+ *   solo   [name]               partners now treated as singles (the other can't go)
+ *   rsvp   { normName: status } Partiful answers, for the admin page
+ */
+export function mergeRoster(base, roster) {
+  if (!roster) return base;
+  const solo = new Set((roster.solo || []).map(norm));
+  const out = base.map((p) => (p.couple && solo.has(norm(p.name)) ? { name: p.name, aliases: p.aliases } : p));
+  (roster.added || []).forEach((a) => {
+    if (!out.some((p) => norm(p.name) === norm(a.name))) out.push(a.couple ? { name: a.name, couple: a.couple } : { name: a.name });
+  });
+  return out;
+}
+
+export function cleanRoster(body) {
+  const names = (list) => (Array.isArray(list) ? list : []).map((n) => clean(n, MAX_NAME)).filter(Boolean);
+  const added = (Array.isArray(body.added) ? body.added : [])
+    .map((a) => ({ name: clean(a && a.name, MAX_NAME), couple: clean(a && a.couple, 20) }))
+    .filter((a) => a.name);
+  const rsvp = {};
+  Object.entries(body.rsvp && typeof body.rsvp === 'object' ? body.rsvp : {}).forEach(([k, v]) => {
+    if (RSVPS.includes(v) && norm(k)) rsvp[norm(k)] = v;
+  });
+  return { added, solo: names(body.solo), rsvp, syncedAt: Date.now() };
+}
+
 // ---------------------------------------------------------------- host view
 
 /**
@@ -326,6 +359,7 @@ export function adminEdit(state, body, { now = Date.now() } = {}) {
  * list with the dish it holds (null = hasn't signed up yet). Couples count once.
  */
 export function adminView(state, people) {
+  const rsvp = (state.roster && state.roster.rsvp) || {};
   const seen = new Set();
   const households = [];
   people.forEach((p) => {
@@ -339,6 +373,7 @@ export function adminView(state, people) {
     const slot = own[0] || null;
     households.push({
       names: group.map((x) => x.name),
+      rsvp: group.map((x) => rsvp[norm(x.name)] || ''),
       dish: slot ? { slotId: slot.id, item: slot.item, description: slot.desc, by: slot.name, at: slot.claimedAt } : null
     });
   });
@@ -349,6 +384,7 @@ export function adminView(state, people) {
       name: s.name, description: s.desc, at: s.claimedAt, onList: known.has(s.id)
     })),
     households,
-    guests: people.length
+    guests: people.length,
+    syncedAt: (state.roster && state.roster.syncedAt) || 0
   };
 }
