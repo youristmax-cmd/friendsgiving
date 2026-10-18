@@ -90,7 +90,8 @@
         var desc = e.title && e.title.toLowerCase() !== e.item.toLowerCase() ? e.title : '';
         var item = e.item.toLowerCase();
         if (DESC_ONLY.indexOf(item) >= 0) {
-          li.appendChild(node('div', 'entry-title', desc ? (NAMED[item] ? dishName(desc, NAMED[item]) : desc) : e.item));
+          var title = desc ? (NAMED[item] ? dishName(desc, NAMED[item]) : desc) : e.item;
+          li.appendChild(node('div', 'entry-title' + (title.length > 45 ? ' long' : ''), title));
         } else {
           li.appendChild(node('div', 'entry-title', e.item));
           if (desc) li.appendChild(node('div', 'entry-desc', desc));

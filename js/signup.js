@@ -107,7 +107,7 @@
     if (!id) return '';
     return id.isCouple
       ? (id.isPair ? 'You two' : 'You and ' + id.partnerFirst) + ' are coming together, so you count as one kitchen. Please take on a big-batch dish (25 servings) and one dish covers you both.'
-      : 'You’re flying solo. Any 7- to 15-serving dish is perfect; the big-batch dishes are best left to the couples.';
+      : 'No plus one? Any 7- to 15-serving dish is perfect; the big-batch dishes are best left to the couples.';
   }
 
   // ------------------------------------------------------------ open items
@@ -138,9 +138,10 @@
   function visibleItems() {
     if (!state.items || state.itemsFor !== state.input) return null;
     var items = state.items.slice();
-    if (state.ident && state.ident.isCouple) {
-      items.sort(function (a, b) { return (b.big ? 1 : 0) - (a.big ? 1 : 0); });
-    }
+    // Couples see the biggest dishes first; singles see the smallest first.
+    // The sort is stable, so ties keep the menu order.
+    var couple = !!(state.ident && state.ident.isCouple);
+    items.sort(function (a, b) { return couple ? b.serves - a.serves : a.serves - b.serves; });
     return items;
   }
 
