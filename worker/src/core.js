@@ -197,6 +197,8 @@ export function identifyView(state, rawName, people) {
     isPair: ident.isPair,
     ambiguous: ident.ambiguous,
     partnerFirst: ident.partner ? firstOf(ident.partner.name) : '',
+    // Biggest serving size still open, for the couples' nudge.
+    maxServes: openList(state.slots, own).reduce((m, i) => Math.max(m, i.serves), 0),
     existing: own ? claimView(own) : null
   };
 }

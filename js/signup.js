@@ -105,9 +105,16 @@
 
   function nudgeText(id) {
     if (!id) return '';
-    return id.isCouple
-      ? (id.isPair ? 'You two' : 'You and ' + id.partnerFirst) + ' are coming together, so you count as one kitchen. Please take on a big-batch dish (25 servings) and one dish covers you both.'
-      : 'No plus one? Any 7- to 15-serving dish is perfect; the big-batch dishes are best left to the couples.';
+    if (id.isCouple) {
+      // Point couples at the biggest dish still open (fresh dish list if loaded, else what identify said).
+      var items = visibleItems();
+      var max = items ? items.reduce(function (m, i) { return Math.max(m, i.serves); }, 0) : id.maxServes;
+      var ask = max >= 25 ? 'a big-batch dish (' + max + ' servings)'
+        : max ? 'one of the biggest dishes left (' + max + ' servings)'
+        : 'one of the biggest dishes left';
+      return (id.isPair ? 'You two' : 'You and ' + id.partnerFirst) + ' are coming together, so you count as one kitchen. Please take on ' + ask + ' and one dish covers you both.';
+    }
+    return 'No plus one? Any 7- to 15-serving dish is perfect; the big-batch dishes are best left to the couples.';
   }
 
   // ------------------------------------------------------------ open items
