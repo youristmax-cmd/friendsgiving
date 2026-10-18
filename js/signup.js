@@ -9,7 +9,7 @@
     'Salad': 'e.g. Kale and apple salad with cranberries, pecans, and cider vinaigrette',
     'Mac and cheese': 'e.g. Three-cheese baked mac with a toasted breadcrumb crust',
     'Dessert': 'e.g. Pumpkin pie with maple whipped cream',
-    'Non-alcoholic drinks': 'e.g. Hot spiced apple cider and a sparkling cranberry punch',
+    'Non-alcoholic drinks': 'e.g. Soft drinks, sparkling water, and apple juice',
     'Alcoholic drinks': 'e.g. Bourbon apple cider punch, plus a couple bottles of red'
   };
   var STEP_ART = {
