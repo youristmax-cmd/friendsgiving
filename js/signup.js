@@ -206,7 +206,7 @@
       }
     }).catch(function () {
       state.submitting = false;
-      state.notice = 'We couldn’t reach the sign-up sheet. Check your connection and try again.';
+      state.notice = 'We couldn’t save that. Check your connection and try again.';
       render();
     });
   }
@@ -338,7 +338,7 @@
 
     // step note (a notice, when there is one, takes its place)
     var note;
-    if (!FG.configured) note = 'The sign-up isn’t connected to its sheet yet.';
+    if (!FG.configured) note = 'The sign-up isn’t connected yet.';
     else if (state.notice) note = state.notice;
     else if (step === 1) note = ok ? '' : 'Type your name to continue.';
     else if (step === 2) note = picked ? '' : 'Pick a dish to continue.';
