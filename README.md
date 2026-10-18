@@ -20,7 +20,7 @@ Changing the date, time or address means editing `config.js` and pushing.
 ## Admin API
 
 ```sh
-KEY=$(cat .admin-key); API=<worker url>
+KEY=$(cat .admin-key); API=https://friendsgiving.maxyourist.workers.dev/
 curl "$API?action=admin&key=$KEY"                                     # every slot + the claim log
 curl -X POST "$API" -d '{"action":"admin","key":"'$KEY'","op":"set","slotId":"brisket","name":"Max","description":"Smoked brisket"}'
 curl -X POST "$API" -d '{"action":"admin","key":"'$KEY'","op":"release","slotId":"dessert-2"}'
