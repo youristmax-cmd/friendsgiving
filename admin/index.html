@@ -158,7 +158,7 @@ button.primary { background: var(--orange); color: #fff; }
       + (d.syncedAt ? 'Partiful checked ' + when(d.syncedAt) : 'Partiful not synced yet');
 
     fill('waiting', waiting.map(function (h) {
-      return row(joinNames(h.names), rsvpText(h), 'No dish yet', '', h.names.length > 1 ? 'couple' : '');
+      return row(joinNames(h.names), rsvpText(h), 'No dish yet', '', h.kind === 'single' ? '' : h.kind);
     }), 'Everyone has signed up.');
     fill('cant', cant.map(function (h) { return row(joinNames(h.names), '', '', ''); }), 'Nobody so far.');
     $('cant').querySelectorAll('.open').forEach(function (n) { n.textContent = ''; });
@@ -183,7 +183,7 @@ button.primary { background: var(--orange); color: #fff; }
 
     fill('log', d.log.slice(0, 40).map(function (e) {
       var verb = { claim: 'claimed', swap: 'switched to', release: 'gave up', 'admin-set': 'set by host:', 'admin-release': 'freed by host:', 'admin-add': 'slot added:', 'admin-remove': 'slot removed:' }[e.action] || e.action;
-      if (e.action === 'roster') return row(when(e.at), '', 'Guest list synced from Partiful', e.added + ' added · ' + e.solo / 2 + ' couples split · ' + e.rsvp + ' RSVPs');
+      if (e.action === 'roster') return row(when(e.at), '', 'Guest list synced from Partiful', e.added + ' added · ' + e.solo / 2 + ' pairs split · ' + e.rsvp + ' RSVPs');
       var who = e.name || e.typed || '';
       return row(when(e.at), '', (who ? who + ' ' : '') + verb + ' ' + e.item, e.desc || '');
     }), 'No activity yet.');

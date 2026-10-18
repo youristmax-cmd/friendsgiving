@@ -373,6 +373,7 @@ export function adminView(state, people) {
     const slot = own[0] || null;
     households.push({
       names: group.map((x) => x.name),
+      kind: group.length < 2 ? 'single' : group.some((x) => x.siblings) ? 'siblings' : 'couple',
       rsvp: group.map((x) => rsvp[norm(x.name)] || ''),
       dish: slot ? { slotId: slot.id, item: slot.item, description: slot.desc, by: slot.name, at: slot.claimedAt } : null
     });
