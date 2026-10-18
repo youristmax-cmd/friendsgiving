@@ -4,6 +4,6 @@ window.FG_CONFIG = {
   apiUrl: 'https://friendsgiving.maxyourist.workers.dev/',
   date: 'November 28th',
   time: '7:30pm',
-  address: '[Address]',    // e.g. '123 Main St, Apt 4'
+  address: '4234 Lockwood Ave',
   hosts: 'Carly & Max'
 };
