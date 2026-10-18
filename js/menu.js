@@ -2,10 +2,29 @@
 (function () {
   var COURSES = ['To Start', 'The Main', 'Sides', 'Sweets', 'Drinks'];
   var REFRESH_MS = 45000;
-  // Shown as section headers. In these sections the item is the header, so the
-  // guest's description is the whole entry; elsewhere it's the dish, then the description.
-  var HEADERS = { 'To Start': 'Appetizers', 'Sweets': 'Desserts' };
-  var DESC_ONLY = ['To Start', 'Sweets', 'Drinks'];
+  // For these items the guest's description is the whole entry (salads get a
+  // name made from it); the rest show the dish, then the description.
+  var DESC_ONLY = ['appetizer', 'dessert', 'potato', 'vegetable', 'salad', 'non-alcoholic drinks', 'alcoholic drinks'];
+
+  function listJoin(parts) {
+    return parts.length < 2 ? parts.join('') : parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+  }
+
+  // "arugula, tomatoes, and balsamic vinaigrette" → "Arugula salad with tomatoes and balsamic vinaigrette".
+  // A description that already says "salad" is used as written.
+  function saladName(d) {
+    if (/salad/i.test(d)) return d;
+    var t = d.replace(/[.!]+$/, '').trim();
+    var w = t.search(/\swith\s/i);
+    var name;
+    if (w > 0) {
+      name = t.slice(0, w) + ' salad' + t.slice(w);
+    } else {
+      var parts = t.split(/\s*,\s*(?:and\s+|&\s+)?|\s+(?:and|&)\s+/i).map(function (x) { return x.trim(); }).filter(Boolean);
+      name = parts[0] + ' salad' + (parts.length > 1 ? ' with ' + listJoin(parts.slice(1)) : '');
+    }
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
 
   var params = new URLSearchParams(location.search);
   var me = params.get('me') || '';
@@ -47,7 +66,7 @@
       leafR.className = 'flip';
       head.appendChild(node('span', 'rule'));
       head.appendChild(leafL);
-      head.appendChild(node('span', 'course-name', HEADERS[course] || course));
+      head.appendChild(node('span', 'course-name', course));
       head.appendChild(leafR);
       head.appendChild(node('span', 'rule'));
       section.appendChild(head);
@@ -55,8 +74,9 @@
       list.forEach(function (e) {
         var li = node('li', 'entry' + (e.mine ? ' mine' : ''));
         var desc = e.title && e.title.toLowerCase() !== e.item.toLowerCase() ? e.title : '';
-        if (DESC_ONLY.indexOf(course) >= 0) {
-          li.appendChild(node('div', 'entry-title', desc || e.item));
+        var item = e.item.toLowerCase();
+        if (DESC_ONLY.indexOf(item) >= 0) {
+          li.appendChild(node('div', 'entry-title', desc ? (item === 'salad' ? saladName(desc) : desc) : e.item));
         } else {
           li.appendChild(node('div', 'entry-title', e.item));
           if (desc) li.appendChild(node('div', 'entry-desc', desc));
