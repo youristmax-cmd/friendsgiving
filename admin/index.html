@@ -147,8 +147,10 @@ button.primary { background: var(--orange); color: #fff; }
     var signedRows = signed.map(function (h) {
       return row(joinNames(h.names), 'as “' + h.dish.by + '”', h.dish.item, h.dish.description + (h.dish.at ? ' · ' + when(h.dish.at) : ''));
     });
+    var hosts = (cfg.hosts || '').toLowerCase().split(/\s*&\s*/);
     claimed.filter(function (s) { return !s.onList; }).forEach(function (s) {
-      signedRows.push(row(s.name, '', s.item, (s.description || '') + (s.at ? ' · ' + when(s.at) : ''), 'not on guest list'));
+      var tag = hosts.indexOf(s.name.toLowerCase()) >= 0 ? 'host' : 'not on guest list';
+      signedRows.push(row(s.name, '', s.item, (s.description || '') + (s.at ? ' · ' + when(s.at) : ''), tag));
     });
     fill('signed', signedRows, 'Nobody yet.');
 
