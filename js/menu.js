@@ -50,7 +50,9 @@
       var ul = node('ul', 'entries');
       list.forEach(function (e) {
         var li = node('li', 'entry' + (e.mine ? ' mine' : ''));
-        li.appendChild(node('div', 'entry-title', e.title || e.item));
+        // The dish first, then what the guest wrote about it.
+        li.appendChild(node('div', 'entry-title', e.item));
+        if (e.title && e.title.toLowerCase() !== e.item.toLowerCase()) li.appendChild(node('div', 'entry-desc', e.title));
         li.appendChild(node('div', 'entry-meta', 'by ' + e.by + ' · serves ' + e.serves));
         if (e.mine) {
           li.appendChild(node('span', 'pill', 'you'));
