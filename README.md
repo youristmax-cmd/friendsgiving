@@ -32,7 +32,7 @@ A slot that has a name counts as claimed. One set by `set` belongs to whoever it
 
 ## How it behaves
 
-- **Names:** fuzzy matching runs on the server. "A and B", "A & B" and "A + B" count as a couple. A name that's not on the list goes through as a single. A name that matches two guests asks for a full name.
+- **Names:** fuzzy matching runs on the server. "A and B", "A & B" and "A + B" count as a couple. A name that's not on the list goes through as a single. Nobody has to give a last name. A name that fits two guests goes through as typed, with a gentle hint to add more.
 - **Claims:** whoever loses a race for the last slot goes back to the dish list with a note. The same name and dish within 10 seconds counts as one claim, so a double tap is harmless.
 - **Coming back:** typing the same name (or a partner's) shows the current dish, with a choice of *see the menu* or *change my dish*. Changing frees the old slot when the new one is claimed.
 - **Menu:** refreshes every 45 seconds in place. After a claim, the guest's own dish is highlighted. The same phone keeps the highlight on the bare menu link.

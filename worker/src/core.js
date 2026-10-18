@@ -102,7 +102,8 @@ const memberKey = (p) => (p.roster ? 'g:' : 'n:') + norm(p.name);
 
 /**
  * Resolve typed text to a kitchen.
- * status: 'empty' (too short), 'ambiguous' (matches several guests), 'match'.
+ * status: 'empty' (too short) or 'match'. A name that fits several guests goes
+ * through as typed, flagged `ambiguous`, so nobody is forced to give a last name.
  * byName (what the menu shows): couples by first names, "Sam & Jo";
  * singles by full roster name, or as typed (title-cased) when not on the list.
  */
@@ -115,6 +116,7 @@ export function identify(text, people) {
 
   let guest = null;
   let partner = null;
+  let ambiguous = false;
   if (isPair) {
     const a = findPerson(pairParts[0], people);
     const b = findPerson(pairParts[1], people);
@@ -126,10 +128,9 @@ export function identify(text, people) {
       guest = rosterPerson(r[0], people);
       const mate = guest.couple ? people.find((p) => p.couple === guest.couple && p.name !== guest.name) : null;
       partner = mate ? rosterPerson(mate, people) : null;
-    } else if (r.length > 1) {
-      return { status: 'ambiguous' };
     } else {
-      guest = { name: titleCase(rawInput) }; // not on the list → treated as a single
+      ambiguous = r.length > 1;
+      guest = { name: titleCase(rawInput) }; // not on the list (or not sure who) → treated as a single
     }
   }
   if (!guest) return { status: 'empty' };
@@ -145,6 +146,7 @@ export function identify(text, people) {
     people: group,
     isPair,
     isCouple,
+    ambiguous,
     matchName: isPair ? guest.name + ' & ' + partner.name : guest.name,
     byName: isCouple ? firstOf(named[0].name) + ' & ' + firstOf(named[1].name) : guest.name,
     initials: isPair
@@ -192,6 +194,7 @@ export function identifyView(state, rawName, people) {
     initials: ident.initials,
     isCouple: ident.isCouple,
     isPair: ident.isPair,
+    ambiguous: ident.ambiguous,
     partnerFirst: ident.partner ? firstOf(ident.partner.name) : '',
     existing: own ? claimView(own) : null
   };

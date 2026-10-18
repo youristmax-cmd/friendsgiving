@@ -292,8 +292,8 @@
 
     // step 1
     var tooShort = key(state.input).replace(/[^a-z]/g, '').length < 2;
-    var ambiguous = !!(id && id.status === 'ambiguous');
-    show(el.cardEmpty, !ok && !ambiguous);
+    var ambiguous = ok && !!id.ambiguous;
+    show(el.cardEmpty, !ok);
     el.cardEmptyText.textContent = state.lookupFailed
       ? 'We couldn’t reach the guest list. Trying again…'
       : state.pending && !tooShort
