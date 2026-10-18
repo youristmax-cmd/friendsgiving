@@ -67,7 +67,7 @@ button.primary { background: var(--orange); color: #fff; }
 <div id="app" hidden>
 <div class="top">
 <h1>Potluck admin</h1>
-<div><button id="refresh" type="button">Refresh</button> <button id="logout" type="button">Sign out</button></div>
+<div><button id="pdf" type="button">Download menu PDF</button> <button id="refresh" type="button">Refresh</button> <button id="logout" type="button">Sign out</button></div>
 </div>
 <div class="sub" id="updated"></div>
 
@@ -236,6 +236,70 @@ button.primary { background: var(--orange); color: #fff; }
     });
   });
   setInterval(function () { if (data && !document.hidden) load(); }, 60000);
+
+  // ---------------------------------------------------------- menu PDF
+  // Loads the live menu page off-screen, snapshots it as it looks on the site,
+  // and saves it as a single full-length PDF page.
+  var LIBS = {
+    image: 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js',
+    pdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  };
+  function loadScript(doc, src) {
+    return new Promise(function (res, rej) {
+      var s = doc.createElement('script');
+      s.src = src; s.onload = res; s.onerror = function () { rej(new Error('script')); };
+      doc.head.appendChild(s);
+    });
+  }
+  function waitFor(test, ms) {
+    return new Promise(function (res, rej) {
+      var t0 = Date.now();
+      (function tick() {
+        if (test()) return res();
+        if (Date.now() - t0 > ms) return rej(new Error('timeout'));
+        setTimeout(tick, 100);
+      })();
+    });
+  }
+  function downloadMenu() {
+    var btn = $('pdf');
+    btn.disabled = true; btn.textContent = 'Making PDF…';
+    var f = document.createElement('iframe');
+    f.setAttribute('aria-hidden', 'true');
+    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:548px;height:1200px;border:0';
+    f.src = '../menu/?print=1&t=' + Date.now();
+    document.body.appendChild(f);
+    var win, doc;
+    (window.jspdf ? Promise.resolve() : loadScript(document, LIBS.pdf))
+      .then(function () { return waitFor(function () { return f.contentWindow && f.contentWindow.FG_MENU_READY; }, 20000); })
+      .then(function () {
+        win = f.contentWindow; doc = f.contentDocument;
+        return Promise.all([doc.fonts.ready, loadScript(doc, LIBS.image)].concat([].map.call(doc.images, function (img) {
+          return img.decode ? img.decode().catch(function () {}) : null;
+        })));
+      })
+      .then(function () {
+        f.style.height = doc.documentElement.scrollHeight + 'px'; // the whole page, not one screen
+        return new Promise(function (r) { setTimeout(r, 300); });
+      })
+      .then(function () {
+        var node = doc.querySelector('.page');
+        // JPEG keeps the file small (a PNG this size makes a ~25 MB PDF).
+        return win.htmlToImage.toJpeg(node, { pixelRatio: 3, quality: 0.92, backgroundColor: '#E9E1D3' }).then(function (img) {
+          var w = node.offsetWidth * 0.75, h = node.offsetHeight * 0.75; // CSS px → pt
+          var pdf = new window.jspdf.jsPDF({ unit: 'pt', format: [w, h], orientation: h > w ? 'portrait' : 'landscape' });
+          pdf.addImage(img, 'JPEG', 0, 0, w, h);
+          pdf.save('friendsgiving-menu-' + new Date().toISOString().slice(0, 10) + '.pdf');
+        });
+      })
+      .catch(function () { alertLine('Couldn’t make the PDF. Try again in a moment.'); })
+      .then(function () {
+        f.remove();
+        btn.disabled = false; btn.textContent = 'Download menu PDF';
+      });
+  }
+  function alertLine(msg) { $('updated').textContent = msg; }
+  $('pdf').addEventListener('click', downloadMenu);
   load();
 })();
 </script>

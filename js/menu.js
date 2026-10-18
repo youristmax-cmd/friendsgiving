@@ -41,9 +41,11 @@
   }
 
   var params = new URLSearchParams(location.search);
-  var me = params.get('me') || '';
+  // ?print=1: the admin page's PDF export. Nobody's dish highlighted, no refreshing.
+  var printMode = params.has('print');
+  var me = printMode ? '' : params.get('me') || '';
   if (me) FG.store.setClaim(me);
-  else me = FG.store.getClaim();
+  else if (!printMode) me = FG.store.getClaim();
 
   var coursesEl = document.getElementById('courses');
   var progressEl = document.getElementById('progress');
@@ -118,9 +120,10 @@
       if (r.error) throw new Error(r.error);
       var json = JSON.stringify(r.entries);
       if (json !== lastJson) { lastJson = json; render(r.entries); }
+      if (printMode) window.FG_MENU_READY = true;
     }).catch(function () {
       if (!lastJson) progressEl.textContent = 'couldn’t reach the kitchen, trying again…';
-    }).then(schedule);
+    }).then(function () { if (!printMode || !lastJson) schedule(); });
   }
 
   function schedule() {
@@ -128,6 +131,6 @@
     timer = setTimeout(function () { if (!document.hidden) load(); else schedule(); }, lastJson ? REFRESH_MS : 8000);
   }
 
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  if (!printMode) document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   load();
 })();
