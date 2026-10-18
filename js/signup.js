@@ -293,12 +293,11 @@
     // step 1
     var tooShort = key(state.input).replace(/[^a-z]/g, '').length < 2;
     var ambiguous = ok && !!id.ambiguous;
-    show(el.cardEmpty, !ok);
+    // Before a name is typed there's no card; while looking it up, a short status.
+    show(el.cardEmpty, !ok && !tooShort && (state.pending || state.lookupFailed));
     el.cardEmptyText.textContent = state.lookupFailed
       ? 'We couldn’t reach the guest list. Trying again…'
-      : state.pending && !tooShort
-        ? 'Checking the guest list…'
-        : 'Type your name and we’ll suggest what size dish to take on.';
+      : 'Checking the guest list…';
     show(el.cardMatch, ok);
     show(el.cardAmbiguous, ambiguous);
     el.name.classList.toggle('matched', ok);
